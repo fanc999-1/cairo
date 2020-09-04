@@ -4,8 +4,11 @@ project('cairo', 'c', 'cpp',
   default_options: ['warning_level=2'],
 )
 
-freetype_required_version = '>= 9.7.3'
-freetype_colrv1_required_version = '>= 25.0.19'
+# Keep in sync with configure.ac!
+freetype_required_version = '>= 9.7.3'        # AKA freetype-2.1.9
+freetype_required_version_cmake = '>= 2.1.9'
+freetype_colrv1_required_version = '>= 25.0.19' # AKA freetype-2.13.0
+freetype_colrv1_required_version_cmake = '>= 2.13.0'
 fontconfig_required_version = '>= 2.2.95'
 xrender_required_version = '>= 0.6'
 xcb_required_version = '>= 1.6'
@@ -236,7 +239,9 @@ if zlib_dep.found()
   conf.set('HAVE_ZLIB', 1)
 endif
 
-png_dep = dependency('libpng',
+# CMake use different naming schemes for libpng from pkg-config
+png_pkg = cc.get_argument_syntax() == 'msvc' ? 'png' : 'libpng'
+png_dep = dependency(png_pkg,
   required: get_option('png'),
   fallback: ['libpng', 'libpng_dep']
 )
@@ -301,11 +306,23 @@ endif
 
 ttx = find_program('ttx', required: false)
 
-freetype_dep = dependency('freetype2',
-  required: get_option('freetype'),
-  version: freetype_required_version,
-  fallback: ['freetype2', 'freetype_dep'],
-)
+# CMake build files use different naming and versioning schemes for FreeType2
+ft_opt = get_option('freetype')
+if not ft_opt.disabled()
+  freetype_dep = dependency('freetype2',
+    required: false,
+    method: 'pkg-config',
+    version freetype_required_version,
+  )
+  if not freetype_dep.found()
+    freetype_dep = dependency('FreeType',
+      required: ft_opt,
+      version: freetype_required_version_cmake,
+      fallback: ['freetype2', 'freetype_dep']
+    )
+  endif
+endif
+
 if freetype_dep.found()
   feature_conf.set('CAIRO_HAS_FT_FONT', 1)
   built_features += [{
@@ -342,7 +359,12 @@ if freetype_dep.found()
         conf.set('CAIRO_CAN_TEST_TTX_FONT', 1)
       endif
     endif
-    if freetype_dep.version().version_compare(freetype_colrv1_required_version) and \
+    if freetype_dep.type_name() == 'cmake'
+      check_color_glyph_paint = freetype_dep.version().version_compare(freetype_colrv1_required_version_cmake)
+    else
+      check_color_glyph_paint = freetype_dep.version().version_compare(freetype_colrv1_required_version)
+    endif
+    if check_color_glyph_paint and \
        cc.has_function('FT_Get_Color_Glyph_Paint', dependencies: freetype_dep)
       conf.set('HAVE_FT_COLR_V1', 1)
     endif
