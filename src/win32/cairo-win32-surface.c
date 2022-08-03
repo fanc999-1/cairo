@@ -107,7 +107,9 @@ _cairo_win32_print_gdi_error (const char *context)
 			 0, NULL)) {
 	fprintf (stderr, "%s: Unknown GDI error", context);
     } else {
-	fprintf (stderr, "%s: %S", context, (wchar_t *)lpMsgBuf);
+	fprintf (stderr, "%s: ", context);
+	fprintf (stderr, "error code: %d ", last_error);
+	fwprintf (stderr, L"%s", (wchar_t *)lpMsgBuf);
 
 	LocalFree (lpMsgBuf);
     }
