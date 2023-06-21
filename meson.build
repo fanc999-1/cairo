@@ -317,7 +317,7 @@ if not ft_opt.disabled()
   freetype_dep = dependency('freetype2',
     required: false,
     method: 'pkg-config',
-    version freetype_required_version,
+    version: freetype_required_version,
   )
   if not freetype_dep.found()
     freetype_dep = dependency('FreeType',
