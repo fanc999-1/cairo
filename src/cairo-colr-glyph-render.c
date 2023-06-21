@@ -43,6 +43,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+#define alloca _alloca
+#endif
+
 #if HAVE_FT_COLR_V1
 
 #include <ft2build.h>
