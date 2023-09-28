@@ -96,6 +96,7 @@ if cc.get_id() == 'msvc'
                         '/wd4305',
                         '/D_CRT_SECURE_NO_WARNINGS',
                         '/D_CRT_NONSTDC_NO_WARNINGS',
+                        '/D_USE_MATH_DEFINES',
                         language : 'c')
 endif
 
