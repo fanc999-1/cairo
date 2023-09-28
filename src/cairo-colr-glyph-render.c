@@ -45,6 +45,10 @@
 
 #if HAVE_FT_COLR_V1
 
+#ifdef _WIN32
+#include <malloc.h>
+#endif
+
 #include <ft2build.h>
 #include FT_CONFIG_OPTIONS_H
 #include FT_COLOR_H
