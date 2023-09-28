@@ -232,7 +232,7 @@ if zlib_dep.found()
   conf.set('HAVE_ZLIB', 1)
 endif
 
-png_dep = dependency('libpng',
+png_dep = dependency(['libpng', 'png'],
   required: get_option('png'),
   fallback: ['libpng', 'libpng_dep']
 )
