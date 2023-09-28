@@ -5,7 +5,9 @@ project('cairo', 'c', 'cpp',
 )
 
 freetype_required_version = '>= 9.7.3'
+freetype_required_version_cmake = '>= 2.1.9'
 freetype_colrv1_required_version = '>= 25.0.19'
+freetype_colrv1_required_version_cmake = '>= 2.13.0'
 fontconfig_required_version = '>= 2.2.95'
 xrender_required_version = '>= 0.6'
 xcb_required_version = '>= 1.6'
@@ -299,10 +301,20 @@ freetype_required = host_machine.system() not in ['windows', 'darwin']
 freetype_option = freetype_option.disable_auto_if(not freetype_required)
 
 freetype_dep = dependency('freetype2',
-  required: freetype_option,
+  method: 'pkg-config',
+  required: false,
   version: freetype_required_version,
-  fallback: ['freetype2', 'freetype_dep'],
 )
+
+if not freetype_dep.found() and not freetype_option.disabled()
+  freetype_dep = dependency('FreeType',
+    method: 'cmake',
+    required: freetype_option,
+    version: freetype_required_version_cmake,
+    fallback: ['freetype2', 'freetype_dep'],
+  )
+endif
+
 if freetype_dep.found()
   feature_conf.set('CAIRO_HAS_FT_FONT', 1)
   built_features += [{
@@ -340,9 +352,16 @@ if freetype_dep.found()
         conf.set('CAIRO_CAN_TEST_TTX_FONT', 1)
       endif
     endif
-    if freetype_dep.version().version_compare(freetype_colrv1_required_version) and \
-       cc.has_function('FT_Get_Color_Glyph_Paint', dependencies: freetype_dep)
-      conf.set('HAVE_FT_COLR_V1', 1)
+    if freetype_dep.type_name() == 'cmake'
+      if freetype_dep.version().version_compare(freetype_colrv1_required_version_cmake) and \
+         cc.has_function('FT_Get_Color_Glyph_Paint', dependencies: freetype_dep)
+        conf.set('HAVE_FT_COLR_V1', 1)
+      endif
+    else
+      if freetype_dep.version().version_compare(freetype_colrv1_required_version) and \
+         cc.has_function('FT_Get_Color_Glyph_Paint', dependencies: freetype_dep)
+        conf.set('HAVE_FT_COLR_V1', 1)
+      endif
     endif
     check_funcs += ft_check_funcs
     deps += [freetype_dep]
